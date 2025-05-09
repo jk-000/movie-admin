@@ -4,9 +4,18 @@ import { useRouter } from "next/navigation";
 import AddMovieModal from "./AddMovieModel";
 import { Button } from "@/components/ui/button";
 
+// Define Movie type
+interface Movie {
+  _id: string;
+  title: string;
+  poster: string;
+  genre: string[] | string; // This can be a single string or an array of strings
+  rating: number;
+}
+
 const DashboardPage = () => {
   const router = useRouter();
-  const [movies, setMovies] = useState<any[]>([]);
+  const [movies, setMovies] = useState<Movie[]>([]); // Use Movie[] type
   const [loading, setLoading] = useState(true);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
@@ -15,14 +24,14 @@ const DashboardPage = () => {
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     if (!token) {
-      router.push("/");
+      router.push("/"); // Redirect to login if not authenticated
     } else {
-      setIsCheckingAuth(false);
+      setIsCheckingAuth(false); // If authenticated, stop checking
     }
   }, [router]);
 
   useEffect(() => {
-    if (isCheckingAuth) return;
+    if (isCheckingAuth) return; // Skip if still checking authentication
 
     const fetchMovies = async () => {
       try {
@@ -34,11 +43,11 @@ const DashboardPage = () => {
         } else if (Array.isArray(data.movies)) {
           setMovies(data.movies);
         } else {
-          setMovies([]);
+          setMovies([]); // If no movies, set empty array
         }
       } catch (error) {
         console.error("Failed to fetch movies", error);
-        setMovies([]);
+        setMovies([]); // Set empty array if error occurs
       } finally {
         setLoading(false);
       }
@@ -49,7 +58,7 @@ const DashboardPage = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("authToken");
-    router.push("/");
+    router.push("/"); // Redirect to login page after logout
   };
 
   if (isCheckingAuth) {
@@ -66,7 +75,10 @@ const DashboardPage = () => {
         <h2 className="text-2xl font-bold text-gray-800">🎬 Dashboard</h2>
         <div className="flex gap-3">
           <AddMovieModal />
-          <Button className="bg-red-500 hover:bg-red-600" onClick={handleLogout}>
+          <Button
+            className="bg-red-500 hover:bg-red-600 cursor-pointer transition-colors"
+            onClick={handleLogout}
+          >
             Logout
           </Button>
         </div>
@@ -75,23 +87,31 @@ const DashboardPage = () => {
       {loading ? (
         <div className="text-center text-gray-500">Loading movies...</div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5 xl:grid-cols-6">
+        <div className="grid gap-5 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {movies.map((movie) => (
             <div
               key={movie._id}
-              className="bg-white border rounded-xl shadow hover:shadow-lg transition duration-200"
+              className="bg-white border rounded-xl shadow hover:shadow-md transition duration-200 overflow-hidden"
             >
-              <img
-                src={movie.poster}
-                alt={movie.title}
-                className="w-full h-40 sm:h-48 object-cover rounded-t-xl"
-              />
-              <div className="p-4">
-                <h3 className="text-lg font-semibold text-gray-800">{movie.title}</h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  {Array.isArray(movie.genre) ? movie.genre.join(", ") : movie.genre}
+              <div className="w-full aspect-[2/3] bg-gray-100 overflow-hidden">
+                <img
+                  src={movie.poster}
+                  alt={movie.title}
+                  className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                />
+              </div>
+              <div className="p-3">
+                <h3 className="text-base font-semibold text-gray-800 truncate">
+                  {movie.title}
+                </h3>
+                <p className="text-xs text-gray-600 mt-1 truncate">
+                  {Array.isArray(movie.genre)
+                    ? movie.genre.join(", ")
+                    : movie.genre}
                 </p>
-                <p className="text-sm text-gray-500 mt-1">⭐ Rating: {movie.rating}</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  ⭐ Rating: {movie.rating}
+                </p>
               </div>
             </div>
           ))}
